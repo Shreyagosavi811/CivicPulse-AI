@@ -9,7 +9,7 @@ const ELECTION_TYPES = [
     id: 'lok-sabha',
     title: "Lok Sabha (General Elections)",
     category: "NATIONAL",
-    desc: "The lower house of India's bicameral Parliament. Members are directly elected by the people.",
+    desc: "The lower house of India&apos;s bicameral Parliament. Members are directly elected by the people.",
     frequency: "Every 5 years",
     icon: <Users className="text-orange-600" />
   },
@@ -52,7 +52,7 @@ const ElectionDirectory = () => {
         <div>
           <h2 className="text-3xl font-bold font-heading mb-3 text-foreground tracking-tight">Election Directory</h2>
           <p className="text-foreground/60 max-w-xl">
-            A comprehensive guide to the different layers of the world's largest democratic process.
+            A comprehensive guide to the different layers of the world&apos;s largest democratic process.
           </p>
         </div>
         

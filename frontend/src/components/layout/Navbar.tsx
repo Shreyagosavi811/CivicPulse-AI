@@ -136,7 +136,7 @@ const Navbar = () => {
                 </button>
                 
                 <p className="text-center mt-6 text-sm text-foreground/50">
-                  Don't have an account? <span className="text-orange-600 font-bold hover:underline cursor-pointer">Register Now</span>
+                  Don&apos;t have an account? <span className="text-orange-600 font-bold hover:underline cursor-pointer">Register Now</span>
                 </p>
               </div>
             </motion.div>

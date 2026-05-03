@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Bot, User, ChevronRight, Info, Loader2, 
@@ -71,7 +71,7 @@ const ChatAssistant = () => {
       recognitionRef.current.onerror = () => setIsListening(false);
       recognitionRef.current.onend = () => setIsListening(false);
     }
-  }, [language]);
+  }, [language, handleSend]);
 
   const toggleListening = () => {
     if (isListening) {
@@ -94,7 +94,7 @@ const ChatAssistant = () => {
     }
   }, [messages, isLoading]);
 
-  const speak = (text: string) => {
+  const speak = useCallback((text: string) => {
     if (!isVoiceEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
     
     window.speechSynthesis.cancel();
@@ -113,17 +113,17 @@ const ChatAssistant = () => {
     utterance.rate = 1.0;
     
     window.speechSynthesis.speak(utterance);
-  };
+  }, [isVoiceEnabled, language]);
 
-  const launchSimulation = (action: string) => {
+  const launchSimulation = useCallback((action: string) => {
     reset();
     const element = document.getElementById('simulation');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, [reset]);
 
-  const handleSend = async (text: string = input) => {
+  const handleSend = useCallback(async (text: string = input) => {
     if (!text.trim() || isLoading) return;
 
     const { unlockAchievement } = useSimulationStore.getState();
@@ -191,7 +191,7 @@ const ChatAssistant = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [input, isLoading, isELI10, language, isFactCheck, isVoiceEnabled, speak, launchSimulation, incrementQuestions]);
 
   const getConfidenceColor = (score: number) => {
     if (score >= 0.8) return "text-green-500 bg-green-500/10";
