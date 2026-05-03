@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-05-02T21:26:00Z",
+  "governance": {
+    "status": "draft",
+    "admin_approval": false,
+    "version_control": "v1.0"
+  },
+  "categories": [
+    {
+      "id": "registration",
+      "title": "Voter Registration",
+      "rules": [
+        {
+          "id": "R001",
+          "title": "Age Eligibility",
+          "description": "Any citizen who has attained the age of 18 years on the qualifying date is eligible to be registered.",
+          "source": "Article 326",
+          "tags": ["eligibility", "age"]
+        }
+      ]
+    },
+    {
+      "id": "voting_process",
+      "title": "The Voting Process",
+      "rules": [
+        {
+          "id": "V001",
+          "title": "Identity Verification",
+          "description": "Voters must present an EPIC (Electors Photo Identity Card) or alternative approved ID.",
+          "source": "ECI Guidelines",
+          "tags": ["verification", "id"]
+        }
+      ]
+    },
+    {
+      "id": "laws",
+      "title": "Election Laws",
+      "rules": [
+        {
+          "id": "L001",
+          "title": "Superintendence",
+          "description": "The superintendence, direction, and control of elections are vested in the Election Commission.",
+          "source": "Article 324",
+          "tags": ["constitutional", "ECI"]
+        }
+      ]
+    }
+  ]
+}
