@@ -38,7 +38,7 @@ const LiveNews = () => {
     setIsGenerating(true);
     try {
       const headlines = NEWS_FEED.map(n => n.title);
-      const response = await fetch('http://localhost:8000/ai/summarize-news', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/ai/summarize-news`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ headlines, state: selectedState })

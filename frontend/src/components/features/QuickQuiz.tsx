@@ -47,7 +47,7 @@ const QuickQuiz = () => {
   const fetchQuestions = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/ai/generate-quiz');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/ai/generate-quiz`);
       const data = await response.json();
       setQuestions(data);
     } catch (error) {
