@@ -237,12 +237,14 @@ const ChatAssistant = () => {
               >
                 <ShieldAlert size={14} /> {isFactCheck ? "Myth-Buster ON" : "Myth-Buster"}
               </button>
+               <button 
                 onClick={() => setLanguage(language === 'English' ? 'Hindi' : 'English')}
                 aria-label={`Switch language to ${language === 'English' ? 'Hindi' : 'English'}`}
                 className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-600/10 text-orange-600 border border-orange-600/20 hover:bg-orange-600/20 transition-all"
               >
                 {language === 'English' ? 'EN' : 'HI'}
               </button>
+               <button 
                 onClick={() => setIsELI10(!isELI10)}
                 aria-label={isELI10 ? "Disable ELI10 Mode" : "Enable ELI10 Mode"}
                 className={cn(
