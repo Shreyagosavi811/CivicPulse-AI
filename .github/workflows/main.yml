@@ -23,7 +23,7 @@ jobs:
     - name: Run Tests
       run: |
         cd backend
-        pytest tests/test_api.py
+        python -m pytest tests/test_api.py
       env:
         GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
