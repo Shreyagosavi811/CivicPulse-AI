@@ -1,0 +1,16 @@
+{
+  "name": "CivicPulse AI",
+  "short_name": "CivicPulse",
+  "description": "AI-Powered Civic Learning System for responsible citizens.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ea580c",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
