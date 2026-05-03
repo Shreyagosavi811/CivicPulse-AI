@@ -70,7 +70,7 @@ class NewsRequest(BaseModel):
     """
     Request model for news summarization.
     """
-    headlines: List[str] = Field(..., min_items=1)
+    headlines: List[str] = Field(..., min_length=1)
     state: str = Field("India")
 
 @app.get("/health")
@@ -86,13 +86,13 @@ def get_rag_service():
 
 @app.post("/ai/ask")
 @limiter.limit("5/minute")
-async def ask_ai(request: QueryRequest, request_obj: Request, rag: Any = Depends(get_rag_service)) -> Dict[str, Any]:
+async def ask_ai(request: Request, query_request: QueryRequest, rag: Any = Depends(get_rag_service)) -> Dict[str, Any]:
     """
     Endpoint to ask the AI tutor a question.
     """
     try:
-        logger.info(f"AI Query received: {request.text[:50]}...")
-        response = rag.ask(request.text, request.simplify, request.lang, request.fact_check)
+        logger.info(f"AI Query received: {query_request.text[:50]}...")
+        response = rag.ask(query_request.text, query_request.simplify, query_request.lang, query_request.fact_check)
         return response
     except Exception as e:
         logger.error(f"AI Query failed: {str(e)}")
@@ -100,7 +100,7 @@ async def ask_ai(request: QueryRequest, request_obj: Request, rag: Any = Depends
 
 @app.get("/ai/generate-quiz")
 @limiter.limit("2/minute")
-async def generate_quiz(request_obj: Request) -> List[Dict[str, Any]]:
+async def generate_quiz(request: Request) -> List[Dict[str, Any]]:
     """
     Generates a dynamic 3-question quiz based on the voter guide.
     """
@@ -151,20 +151,20 @@ async def generate_quiz(request_obj: Request) -> List[Dict[str, Any]]:
 
 @app.post("/ai/summarize-news")
 @limiter.limit("5/minute")
-async def summarize_news(request: NewsRequest, request_obj: Request) -> Dict[str, str]:
+async def summarize_news(request: Request, news_request: NewsRequest) -> Dict[str, str]:
     """
     Summarizes news headlines for a specific state.
     """
     try:
         prompt = f"""
-        Analyze these election headlines and provide exactly 3 bullet points of 'Civic Pulse' specifically for {request.state}.
+        Analyze these election headlines and provide exactly 3 bullet points of 'Civic Pulse' specifically for {news_request.state}.
         Focus on:
-        1. Actionable information for voters in {request.state}.
+        1. Actionable information for voters in {news_request.state}.
         2. Important deadlines or legal changes.
         3. Neutral, factual turnout or process trends.
 
         Headlines:
-        {chr(10).join(request.headlines)}
+        {chr(10).join(news_request.headlines)}
         
         Format as clear bullet points. Be professional and warm.
         """
