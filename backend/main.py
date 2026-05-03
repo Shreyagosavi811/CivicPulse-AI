@@ -1,46 +1,110 @@
-from fastapi import FastAPI, HTTPException
-from langchain_core.prompts import ChatPromptTemplate
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from langchain_google_genai import ChatGoogleGenerativeAI
-from services.rag_service import rag_service
+from pydantic import BaseModel, Field
+from typing import List, Dict, Any, Optional
 import uvicorn
 import json
+import os
+from dotenv import load_dotenv
 
-app = FastAPI(title="CivicPulse Intelligence API")
+from services.rag_service import rag_service
+from services.llm_factory import llm_factory
 
-# Initialize Gemini for Quiz
-gemini_llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.7)
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger("civic-pulse-api")
+
+load_dotenv()
+
+limiter = Limiter(key_func=get_remote_address)
+app = FastAPI(
+    title="CivicPulse Intelligence API",
+    description="Backend API for grounded civic education and election intelligence.",
+    version="1.0.0"
+)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Initialize Gemini for Quiz and News
+gemini_llm = llm_factory.get_gemini_llm()
+
+# Security: CORS configuration
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Security: Secure Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
 class QueryRequest(BaseModel):
-    text: str
-    simplify: bool = False
-    lang: str = "English"
-    fact_check: bool = False
+    """
+    Request model for AI chat queries.
+    """
+    text: str = Field(..., max_length=500, description="The user's query text.")
+    simplify: bool = Field(False, description="Whether to simplify the response (ELI10).")
+    lang: str = Field("English", description="Target language for the response.")
+    fact_check: bool = Field(False, description="Whether to enable fact-checking/myth-busting mode.")
+
+class NewsRequest(BaseModel):
+    """
+    Request model for news summarization.
+    """
+    headlines: List[str] = Field(..., min_items=1)
+    state: str = Field("India")
 
 @app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
+async def health_check() -> Dict[str, str]:
+    """
+    Checks the health status of the API.
+    """
+    return {"status": "healthy", "version": "1.0.0"}
 
 @app.post("/ai/ask")
-async def ask_ai(request: QueryRequest):
+@limiter.limit("5/minute")
+async def ask_ai(request: QueryRequest, request_obj: Request) -> Dict[str, Any]:
+    """
+    Endpoint to ask the AI tutor a question.
+    """
     try:
+        logger.info(f"AI Query received: {request.text[:50]}...")
         response = rag_service.ask(request.text, request.simplify, request.lang, request.fact_check)
         return response
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"AI Query failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 @app.get("/ai/generate-quiz")
-async def generate_quiz():
+@limiter.limit("2/minute")
+async def generate_quiz(request_obj: Request) -> List[Dict[str, Any]]:
+    """
+    Generates a dynamic 3-question quiz based on the voter guide.
+    """
     try:
-        with open("data/voter_guide.md", "r", encoding="utf-8") as f:
+        logger.info("Generating dynamic quiz...")
+        # Load guide content (Consider caching this if it doesn't change often)
+        guide_path = "data/voter_guide.md"
+        with open(guide_path, "r", encoding="utf-8") as f:
             guide_content = f.read()
 
         prompt = f"""
@@ -61,35 +125,42 @@ async def generate_quiz():
         """
         
         response = gemini_llm.invoke(prompt)
-        clean_json = response.content.replace("```json", "").replace("```", "").strip()
-        return json.loads(clean_json)
+        # Robust JSON parsing
+        content = response.content
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        
+        return json.loads(content)
     except Exception as e:
+        # Fallback to static quiz if AI fails
         return [
             {
                 "id": 1,
                 "text": "How long is the VVPAT slip visible?",
                 "options": ["3 seconds", "7 seconds", "10 seconds", "15 seconds"],
                 "answer": 1,
-                "explanation": "The slip is visible for 7 seconds."
+                "explanation": "The slip is visible for 7 seconds for the voter to verify their choice."
             }
         ]
 
 @app.post("/ai/summarize-news")
-async def summarize_news(request: dict):
+@limiter.limit("5/minute")
+async def summarize_news(request: NewsRequest, request_obj: Request) -> Dict[str, str]:
+    """
+    Summarizes news headlines for a specific state.
+    """
     try:
-        headlines = request.get("headlines", [])
-        state = request.get("state", "India")
-        if not headlines: return {"summary": "No active headlines to analyze."}
-
         prompt = f"""
-        Analyze these election headlines and provide exactly 3 bullet points of 'Civic Pulse' specifically for {state}.
+        Analyze these election headlines and provide exactly 3 bullet points of 'Civic Pulse' specifically for {request.state}.
         Focus on:
-        1. Actionable information for voters in {state}.
+        1. Actionable information for voters in {request.state}.
         2. Important deadlines or legal changes.
         3. Neutral, factual turnout or process trends.
 
         Headlines:
-        {chr(10).join(headlines)}
+        {chr(10).join(request.headlines)}
         
         Format as clear bullet points. Be professional and warm.
         """

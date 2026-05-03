@@ -68,6 +68,7 @@ const LiveNews = () => {
             <select 
               value={selectedState}
               onChange={(e) => setSelectedState(e.target.value)}
+              aria-label="Select your state for localized news"
               className="bg-transparent text-[9px] text-red-500 font-bold uppercase tracking-widest focus:outline-none cursor-pointer hover:text-red-600 transition-colors"
             >
               {STATES.map(s => <option key={s} value={s}>{s} Feed</option>)}
@@ -77,6 +78,7 @@ const LiveNews = () => {
         <button 
           onClick={generateAIPulse}
           disabled={isGenerating}
+          aria-label="Generate AI pulse summary for current state"
           className="p-2 bg-orange-600/10 text-orange-600 rounded-lg hover:bg-orange-600/20 transition-all flex items-center gap-2 group/btn"
         >
           {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} className="group-hover/btn:scale-125 transition-transform" />}
@@ -91,6 +93,7 @@ const LiveNews = () => {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
+            aria-live="polite"
             className="p-4 bg-white border border-black/5 rounded-2xl shadow-sm hover:border-orange-600/20 transition-all"
           >
             <div className="flex items-center justify-between mb-2">

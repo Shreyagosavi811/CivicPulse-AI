@@ -232,18 +232,19 @@ const ChatAssistant = () => {
                   "px-3 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-2",
                   isFactCheck ? "bg-red-600 text-white border-red-600 shadow-lg shadow-red-600/20" : "bg-red-50 hover:bg-red-100 border-red-200 text-red-600"
                 )}
+                aria-label={isFactCheck ? "Disable Myth-Buster Mode" : "Enable Myth-Buster Mode"}
                 title="Toggle Myth-Buster Mode"
               >
                 <ShieldAlert size={14} /> {isFactCheck ? "Myth-Buster ON" : "Myth-Buster"}
               </button>
-               <button 
                 onClick={() => setLanguage(language === 'English' ? 'Hindi' : 'English')}
+                aria-label={`Switch language to ${language === 'English' ? 'Hindi' : 'English'}`}
                 className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-600/10 text-orange-600 border border-orange-600/20 hover:bg-orange-600/20 transition-all"
               >
                 {language === 'English' ? 'EN' : 'HI'}
               </button>
-              <button 
                 onClick={() => setIsELI10(!isELI10)}
+                aria-label={isELI10 ? "Disable ELI10 Mode" : "Enable ELI10 Mode"}
                 className={cn(
                   "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all flex items-center gap-2",
                   isELI10 ? "bg-orange-600 text-white border-orange-600" : "bg-orange-50 hover:bg-orange-100 border-foreground/10"
@@ -258,6 +259,7 @@ const ChatAssistant = () => {
                   setIsVoiceEnabled(nextState);
                   if (nextState) speak(language === 'English' ? "Voice enabled" : "आवाज़ चालू है");
                 }}
+                aria-label={isVoiceEnabled ? "Disable Voice Output" : "Enable Voice Output"}
                 className={cn(
                   "p-2 rounded-lg border transition-all",
                   isVoiceEnabled ? "bg-orange-600 text-white border-orange-600" : "bg-orange-50 hover:bg-orange-100 border-foreground/10"
@@ -368,13 +370,14 @@ const ChatAssistant = () => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              aria-label="Type your election query"
               placeholder="Ask about election laws..."
               className="w-full bg-white border border-foreground/10 rounded-xl py-4 pl-6 pr-14 focus:outline-none focus:ring-2 focus:ring-orange-600/20 transition-all text-sm"
               disabled={isLoading}
             />
-            <button
               type="button"
               onClick={toggleListening}
+              aria-label={isListening ? "Stop listening" : "Start voice input"}
               className={cn(
                 "absolute right-14 top-1/2 -translate-y-1/2 p-2.5 rounded-lg transition-all",
                 isListening ? "bg-red-500 text-white animate-pulse" : "bg-black/5 hover:bg-black/10 text-foreground/40"
@@ -385,6 +388,7 @@ const ChatAssistant = () => {
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
+              aria-label="Send message"
               className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-orange-600 text-white rounded-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all shadow-lg shadow-orange-600/20"
             >
               <Send size={18} />

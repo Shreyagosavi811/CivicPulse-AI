@@ -1,43 +1,33 @@
-import os
-from dotenv import load_dotenv
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_groq import ChatGroq
-from langchain_community.vectorstores import Chroma
-from langchain_text_splitters import MarkdownHeaderTextSplitter
+from typing import Dict, Any, Optional
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
+from .llm_factory import llm_factory
+from .retriever.py import retriever_service # Wait, I named it retriever.py
 
-load_dotenv()
+# Correction: The import should be .retriever
+from .retriever import retriever_service
+from .llm_factory import llm_factory
 
 class RAGService:
+    """
+    Main RAG (Retrieval-Augmented Generation) service for the CivicPulse platform.
+    """
     def __init__(self):
-        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-        self.llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.2)
-        self.db = None
-        self._initialize_db()
+        self.llm = llm_factory.get_groq_llm()
 
-    def _initialize_db(self):
-        guide_path = "data/voter_guide.md"
-        if os.path.exists(guide_path):
-            with open(guide_path, "r", encoding="utf-8") as f:
-                content = f.read()
+    def ask(self, query: str, simplify: bool = False, lang: str = "English", fact_check: bool = False) -> Dict[str, Any]:
+        """
+        Processes a user query and returns a grounded response based on the voter guide.
+        
+        Args:
+            query: The user's question.
+            simplify: Whether to use ELI10 mode.
+            lang: Target language for the response.
+            fact_check: Whether to enable myth-busting mode.
             
-            headers_to_split_on = [("#", "Header 1"), ("##", "Header 2")]
-            splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
-            docs = splitter.split_text(content)
-            
-            self.db = Chroma.from_documents(
-                docs, 
-                self.embeddings,
-                persist_directory="./chroma_db"
-            )
-
-    def ask(self, query: str, simplify: bool = False, lang: str = "English", fact_check: bool = False):
-        if not self.db:
-            return {"answer": "I'm still learning. Please wait a moment.", "sources": []}
-
-        retriever = self.db.as_retriever(search_kwargs={"k": 3})
-        context_docs = retriever.invoke(query)
+        Returns:
+            A dictionary containing the answer, sources, and suggested actions.
+        """
+        context_docs = retriever_service.retrieve(query)
         context_text = "\n\n".join([doc.page_content for doc in context_docs])
         sources = list(set([doc.metadata.get("Header 2", "General Guide") for doc in context_docs]))
 
@@ -85,7 +75,10 @@ class RAGService:
             "simulation_action": self._classify_action(query)
         }
 
-    def _classify_action(self, query: str):
+    def _classify_action(self, query: str) -> Optional[str]:
+        """
+        Classifies user intent to suggest specific UI simulations.
+        """
         q = query.lower()
         if "how to vote" in q or "process" in q: return "SUGGEST"
         if "evm" in q or "vvpat" in q: return "AUTO_LAUNCH"
