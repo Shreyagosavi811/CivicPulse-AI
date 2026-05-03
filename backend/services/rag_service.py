@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 from langchain_core.prompts import ChatPromptTemplate
@@ -11,7 +11,7 @@ load_dotenv()
 
 class RAGService:
     def __init__(self):
-        self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         self.llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.2)
         self.db = None
         self._initialize_db()
