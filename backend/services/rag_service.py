@@ -1,18 +1,22 @@
 from typing import Dict, Any, Optional
 from langchain_core.prompts import ChatPromptTemplate
 from .llm_factory import llm_factory
-from .retriever.py import retriever_service # Wait, I named it retriever.py
-
-# Correction: The import should be .retriever
-from .retriever import retriever_service
-from .llm_factory import llm_factory
+from .retriever import get_retriever_service
 
 class RAGService:
     """
     Main RAG (Retrieval-Augmented Generation) service for the CivicPulse platform.
     """
     def __init__(self):
-        self.llm = llm_factory.get_groq_llm()
+        # LLM is also initialized here, which might trigger API key check. 
+        # We'll handle this by ensuring LLMFactory is also lazy if needed, 
+        # but for now, we'll focus on the retriever.
+        self.llm = None
+
+    def get_llm(self):
+        if self.llm is None:
+            self.llm = llm_factory.get_groq_llm()
+        return self.llm
 
     def ask(self, query: str, simplify: bool = False, lang: str = "English", fact_check: bool = False) -> Dict[str, Any]:
         """
@@ -27,7 +31,8 @@ class RAGService:
         Returns:
             A dictionary containing the answer, sources, and suggested actions.
         """
-        context_docs = retriever_service.retrieve(query)
+        retriever = get_retriever_service()
+        context_docs = retriever.retrieve(query)
         context_text = "\n\n".join([doc.page_content for doc in context_docs])
         sources = list(set([doc.metadata.get("Header 2", "General Guide") for doc in context_docs]))
 
@@ -61,7 +66,8 @@ class RAGService:
             ("human", "{query}")
         ])
 
-        chain = prompt | self.llm
+        llm = self.get_llm()
+        chain = prompt | llm
         response = chain.invoke({
             "context": context_text,
             "query": query

@@ -1,7 +1,6 @@
 import os
-from functools import lru_cache
 from typing import List, Optional
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 from langchain_core.documents import Document
@@ -11,7 +10,8 @@ class RetrieverService:
     Service to manage document retrieval and vector database operations.
     """
     def __init__(self):
-        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        # Use HuggingFace embeddings to avoid API key requirements for local/test runs
+        self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         self.persist_directory = "./chroma_db"
         self._db: Optional[Chroma] = None
 
@@ -59,4 +59,11 @@ class RetrieverService:
         db = self.get_db()
         return db.as_retriever(search_kwargs={"k": k}).invoke(query)
 
-retriever_service = RetrieverService()
+# Global instance to be used by other services, but initialized lazily
+_retriever_service: Optional[RetrieverService] = None
+
+def get_retriever_service() -> RetrieverService:
+    global _retriever_service
+    if _retriever_service is None:
+        _retriever_service = RetrieverService()
+    return _retriever_service

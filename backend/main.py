@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
@@ -80,15 +80,19 @@ async def health_check() -> Dict[str, str]:
     """
     return {"status": "healthy", "version": "1.0.0"}
 
+def get_rag_service():
+    """Dependency provider for RAGService."""
+    return rag_service
+
 @app.post("/ai/ask")
 @limiter.limit("5/minute")
-async def ask_ai(request: QueryRequest, request_obj: Request) -> Dict[str, Any]:
+async def ask_ai(request: QueryRequest, request_obj: Request, rag: Any = Depends(get_rag_service)) -> Dict[str, Any]:
     """
     Endpoint to ask the AI tutor a question.
     """
     try:
         logger.info(f"AI Query received: {request.text[:50]}...")
-        response = rag_service.ask(request.text, request.simplify, request.lang, request.fact_check)
+        response = rag.ask(request.text, request.simplify, request.lang, request.fact_check)
         return response
     except Exception as e:
         logger.error(f"AI Query failed: {str(e)}")

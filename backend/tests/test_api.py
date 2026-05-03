@@ -59,20 +59,34 @@ def test_summarize_news_validation():
 
 from unittest.mock import patch, MagicMock
 
+from main import app, get_rag_service
+
 def test_ai_ask_mocked():
-    """Test the AI ask endpoint using mocks to avoid expensive LLM calls during testing."""
-    with patch("services.rag_service.rag_service.ask") as mock_ask:
-        mock_ask.return_value = {
-            "answer": "Mocked response",
-            "sources": ["Source 1"],
-            "chunks": [],
-            "confidence": 0.99,
-            "simulation_action": None
+    """Test the AI ask endpoint using FastAPI dependency overrides."""
+    class MockRAG:
+        def ask(self, text, simplify, lang, fact_check):
+            return {
+                "answer": "Mocked response",
+                "sources": ["Source 1"],
+                "chunks": [],
+                "confidence": 0.99,
+                "simulation_action": None
+            }
+    
+    # Override the dependency
+    app.dependency_overrides[get_rag_service] = lambda: MockRAG()
+    
+    try:
+        payload = {
+            "text": "Mock query",
+            "simplify": False,
+            "lang": "English",
+            "fact_check": False
         }
-        
-        payload = {"text": "Mock query"}
         response = client.post("/ai/ask", json=payload)
         
         assert response.status_code == 200
         assert response.json()["answer"] == "Mocked response"
-        mock_ask.assert_called_once()
+    finally:
+        # Clear the override after the test
+        app.dependency_overrides.clear()
