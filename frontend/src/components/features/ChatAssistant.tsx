@@ -209,6 +209,13 @@ const ChatAssistant = () => {
           <p className="text-sm text-foreground/40 max-w-2xl mx-auto">
             Combining RAG-based knowledge with behavioral simulation and myth detection.
           </p>
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <span className="text-[10px] font-medium text-foreground/30 uppercase tracking-widest">Powered by</span>
+            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md border border-blue-100">
+              <Sparkles size={10} className="fill-blue-600" />
+              <span className="text-[10px] font-bold">Google Gemini AI</span>
+            </div>
+          </div>
         </div>
 
         <div className="bg-white rounded-[32px] border border-black/5 shadow-premium overflow-hidden flex flex-col h-[400px] md:h-[550px]">
@@ -372,11 +379,12 @@ const ChatAssistant = () => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              aria-label="Type your election query"
+              aria-label="Ask your election related question"
               placeholder="Ask about election laws..."
               className="w-full bg-white border border-foreground/10 rounded-xl py-4 pl-6 pr-14 focus:outline-none focus:ring-2 focus:ring-orange-600/20 transition-all text-sm"
               disabled={isLoading}
             />
+            <button
               type="button"
               onClick={toggleListening}
               aria-label={isListening ? "Stop listening" : "Start voice input"}

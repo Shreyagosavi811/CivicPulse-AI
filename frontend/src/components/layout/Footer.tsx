@@ -49,6 +49,12 @@ const Footer = () => {
           <p className="text-xs text-foreground/20 font-bold uppercase tracking-widest">
             © 2026 CivicPulse AI Platform • Non-Partisan Initiative
           </p>
+          <div className="flex items-center gap-4">
+            <span className="text-[10px] font-medium text-foreground/30 uppercase tracking-widest">Built with</span>
+            <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
+              <span className="text-[10px] font-bold">Google Cloud & Vertex AI</span>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

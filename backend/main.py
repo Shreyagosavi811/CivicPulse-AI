@@ -84,16 +84,31 @@ def get_rag_service():
     """Dependency provider for RAGService."""
     return rag_service
 
+import asyncio
+
 @app.post("/ai/ask")
 @limiter.limit("5/minute")
 async def ask_ai(request: Request, query_request: QueryRequest, rag: Any = Depends(get_rag_service)) -> Dict[str, Any]:
     """
-    Endpoint to ask the AI tutor a question.
+    Endpoint to ask the AI tutor a question with timeout protection.
     """
     try:
         logger.info(f"AI Query received: {query_request.text[:50]}...")
-        response = rag.ask(query_request.text, query_request.simplify, query_request.lang, query_request.fact_check)
+        # Add timeout to ensure API resilience
+        response = await asyncio.wait_for(
+            asyncio.to_thread(rag.ask, query_request.text, query_request.simplify, query_request.lang, query_request.fact_check),
+            timeout=15.0
+        )
         return response
+    except asyncio.TimeoutError:
+        logger.warning(f"AI Query timed out: {query_request.text[:50]}")
+        return {
+            "answer": "I'm processing a lot of civic data right now. Please try asking again in a few moments.",
+            "sources": [],
+            "chunks": [],
+            "confidence": 0.0,
+            "simulation_action": None
+        }
     except Exception as e:
         logger.error(f"AI Query failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
